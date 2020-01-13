@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="UTF-8">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <!-- VueJS development version, includes helpful console warnings -->
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <!-- Axios CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.js"></script>
+  <title>Test CORS</title>
+</head>
+
+<body>
+  <div class="container mt-3">
+    <div class="jumbotron">
+      <h1 class="display-4">Warning, local page!</h1>
+      <p class="lead">Friend, pay attention to the address bar of the browser.
+        The page does not belong to the application, although it is located inside the package.
+        All CORS requests to the server <b>http://localhost:5000/cors</b> using JavaScript will be rejected,
+        if this is not allowed by the server security policy.
+        сors.py file shows implementation Cross-Origin Resource Sharing.
+      </p>
+      <p class="lead">
+        Also, for CORS request, I use Vue.js. This is a good example
+        if the frontend of your application uses a JS framework
+        that runs on a different port or even a domain. And Flask only works on the backend.
+      </p>
+      <a href="http://localhost:5000/cors" class="btn btn-secondary">Back to app</a>
+      <hr class="my-4">
+      <p>Test the CORS request, click the button and get the result of the ping_pong() function</p>
+
+      <div id="responce" class="lead">
+        <button class="btn btn-secondary btn-md" type="button" @click="updateMsg">Ping</button>
+        <button class="btn" v-bind:class="classObject" type="button">{{ msg }}</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Vue JS script -->
+  <script>
+    let app = new Vue({
+      el: '#responce',
+      data: {
+        msg: 'test',
+        classObject: {
+          'd-none': true,
+          'btn-success': false,
+          'btn-danger': false
+        }
+      },
+      methods: {
+        updateMsg() {
+          const path = 'http://localhost:5000/cors/pong';
+          axios.get(path)
+            .then((res) => {
+              this.msg = res.data;
+              this.classObject['d-none'] = false;
+              this.classObject['btn-success'] = true,
+              this.classObject['btn-danger'] = false
+            })
+            .catch((error) => {
+              console.log(error);
+              this.msg = 'Error!';
+              this.classObject['d-none'] = false;
+              this.classObject['btn-danger'] = true,
+              this.classObject['btn-success'] = false
+            })
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>

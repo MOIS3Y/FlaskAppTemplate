@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block cors %}
+<div class="container mt-3">
+  <div class="jumbotron container">
+    <h1 class="display-4">CORS test!</h1>
+    <p class="lead">Copy the link and paste into the address bar of the browser.</p>
+    <hr class="my-4">
+    <p class="lead"><b>Link:</b></p>
+    <p class="link" id="copylink">{{ cors_page_url }}</p>
+    <button class="btn btn-secondary btn-md copy-text" data-clipboard-target="#copylink">Copy</button>
+  </div>
+</div>
+
+<style>
+  .link {
+    overflow: scroll;
+  }
+</style>
+
+<!-- clipboard CDN -->
+<script src="https://cdn.jsdelivr.net/clipboard.js/latest/clipboard.min.js"></script>
+
+<script>
+  var clipboard = new Clipboard('.copy-text');
+  clipboard.on('success', function (e) {
+    console.info('Action:', e.action);
+    console.info('Text:', e.text);
+    console.info('Trigger:', e.trigger);
+
+    e.clearSelection();
+  });
+
+  clipboard.on('error', function (e) {
+    console.error('Action:', e.action);
+    console.error('Trigger:', e.trigger);
+  });
+</script>
+{% endblock cors %}
