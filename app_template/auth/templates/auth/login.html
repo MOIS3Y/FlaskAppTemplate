@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block auth %}
+<div class="container">
+  <div class="jumbotron mt-3">
+    <div class="row justify-content-center">
+      <div class="col-md-4">
+        {% for category, message in  get_flashed_messages(with_categories=true) %}
+        <div class="alert alert-secondary text-danger" role="alert">{{ message }}</div>
+        {% endfor %}
+        <form action="{{ url_for('auth.login') }}" method="POST">
+          <div class="form-group">
+            <!-- Add CSRF Protection  -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+            <label for="username">Username:</label>
+            <input type="text" class="form-control" name="username">
+            <label class="mt-2" for="password">Password:</label>
+            <input type="password" class="form-control" name="password">
+            <button type="submit" class="btn btn-secondary mt-3">Sign In</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock auth %}
