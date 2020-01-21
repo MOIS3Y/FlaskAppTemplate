@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 from app_template import create_app
-from app_template.extensions import db, ma
+from app_template.extensions import db, ma, guard
 from app_template.models import User, Links, Tasks, TasksSchema
 
 
@@ -26,7 +26,8 @@ def make_shell_context():
         'User': User,
         'Links': Links,
         'Tasks': Tasks,
-        'TasksSchema': TasksSchema
+        'TasksSchema': TasksSchema,
+        'guard': guard
         }  # Add more variables {name:variable}
 
 

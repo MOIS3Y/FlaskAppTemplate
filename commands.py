@@ -1,7 +1,7 @@
 import click
 from flask.cli import with_appcontext
 
-from app_template.extensions import guard, db
+from app_template.extensions import db
 from app_template.models import User, Tasks, Links
 
 
@@ -14,9 +14,17 @@ def create_database():
 @click.command(name='create_users')
 @with_appcontext
 def create_users():
-    one = User(username='One', password=guard.hash_password('one'))
-    two = User(username='Two', password=guard.hash_password('two'))
-    three = User(username='Three', password=guard.hash_password('three'))
+    one = User(username='One')
+    one.set_password('one')
+    print(one.__repr__())
+    two = User(username='Two')
+    two.set_password('two')
+    print(two.__repr__())
+    three = User(username='Three')
+    three.set_password('three')
+    print(three.__repr__())
+    # two = User(username='Two', password=guard.hash_password('two'))
+    # three = User(username='Three', password=guard.hash_password('three'))
 
     db.session.add_all([one, two, three])
     db.session.commit()

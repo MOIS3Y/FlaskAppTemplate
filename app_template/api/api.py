@@ -1,29 +1,22 @@
-from flask import jsonify
-from flask import abort
-from flask import make_response
-from flask import request
-from flask import url_for
+from flask import jsonify, abort, make_response, request, url_for
 from flask_praetorian import auth_required
 
 from app_template.extensions import db, guard
-from app_template.models import Tasks, TasksSchema
+from app_template.models import Tasks, TasksSchema, User
 from ..api import bp
-
-
-tasks = Tasks.tasks
 
 
 def make_public_task(task):
     """ change id to uri """
 
-    new_task = {}
+    url_task = {}
     for field in task:
         if field == 'id':
-            new_task['uri'] = url_for(
+            url_task['uri'] = url_for(
                 'api.get_task', task_id=task['id'], _external=True)
         else:
-            new_task[field] = task[field]
-    return new_task
+            url_task[field] = task[field]
+    return url_task
 
 
 # * curl -i http://localhost:5000/api/v.1.0/todo/tasks
@@ -129,31 +122,40 @@ def bad_request(error):
 
 # ! GUARD API
 
+# * curl -i -H "Content-Type: application/json" -X POST
+# * -d '{"username":"One", "password":"one"}' http://localhost:5000/api/login
 @bp.route('/login', methods=['POST'])
 def login():
-    json_data = request.get_json()
-    username = json_data['username']
-    password = json_data['password']
+    if not request.json:
+        abort(400)
+    if 'username' not in request.json or 'password' not in request.json:
+        abort(400)
 
-    user = guard.authenticate(username, password)
+    user = User.query.filter_by(username=request.json['username']).first()
+    if user is None or not user.check_password_hash(request.json['password']):
+        abort(401)
+
     token = guard.encode_jwt_token(user)
-    print(token)
     return jsonify({'access_token': token})
 
 
+# * curl -i -X GET -H "Authorization: Bearer <your token>"
+# * http://localhost:5000/api/protected
 @bp.route('/protected')
 @auth_required
 def protected():
     return jsonify({'result': 'You are in a special area!'})
 
 
-@bp.route('/refresh')
+# * curl -i -H "Content-Type: application/json" -X POST
+# * -d '{"token":"<your token>"}' http://localhost:5000/api/refresh
+@bp.route('/refresh', methods=['POST'])
 def refresh():
-    json_data = request.get_json()
-    token = guard.refresh_jwt_token(json_data['token'])
-    return jsonify({'access_token': token})
+    token = guard.refresh_jwt_token(request.json['token'])
+    return jsonify({'update_token': token})
 
 
+# * Test route
 @bp.route('/open')
 def open():
-    return jsonify({'result': 'Hello'})
+    return jsonify({'result': 'Hello, friend'})

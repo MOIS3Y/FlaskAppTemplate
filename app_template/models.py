@@ -1,22 +1,11 @@
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
 from .extensions import db, ma
 
 
 class Tasks(db.Model):
     """ Test database model. Create your models."""
 
-    tasks = [
-        {
-            'id': 1,
-            'title': 'Buy groceries',
-            'description': 'Milk, Cheese, Pizza, Fruit, Tylenol',
-            'done': False
-        },
-        {
-            'id': 2,
-            'title': 'Learn Python',
-            'description': 'Need to find a good Python tutorial on the web',
-            'done': False}
-    ]
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(50))
     description = db.Column(db.String(150))
@@ -27,11 +16,20 @@ class Tasks(db.Model):
         return '<Task: {}>'.format(self.title)
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
+    """ Test database model. Create your models."""
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50))
-    password = db.Column(db.Text)
+    password_hash = db.Column(db.String(128))
 
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password_hash(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    # * Flask Praetorian methods
     @classmethod
     def lookup(cls, username):
         return cls.query.filter_by(username=username).one_or_none()
@@ -59,7 +57,6 @@ class Links(db.Model):
         And created to demonstrate how you can easily put data
         from a db into a base.html """
 
-    application_name = 'app_template'
     id = db.Column(db.Integer, primary_key=True)
     name_url = db.Column(db.String(50))
     url = db.Column(db.Text)
