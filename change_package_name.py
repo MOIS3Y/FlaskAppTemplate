@@ -4,9 +4,11 @@ import os
 import optparse
 import subprocess
 
+import click
+
 
 def get_arguments():
-    """ Get's command line arguments entered by user """
+    """ Gets command line arguments entered by user """
 
     parser = optparse.OptionParser()
     parser.add_option(
@@ -19,7 +21,7 @@ def get_arguments():
             '[-] Please enter a package name, use --help for more info')
     elif not options.rename:
         parser.error(
-            '[-] Please enter a package name, use --help for more info')
+            '[-] Please enter a new package name, use --help for more info')
     return options
 
 
@@ -68,8 +70,16 @@ def rename_package_dir_name(old_name, new_name):
         subprocess.run(['mv', grep + '/', new_name])
 
 
+@click.command()
+@click.option('--find', '-f', help='package name to rename', required=True)
+@click.option('--rename', '-r', help='new package name', required=True)
+def test(find, rename):
+    pass
+
+
 # TODO: setup script: Terminal $python3 script_name.py -f old_name -r new_name
 if __name__ == "__main__":
+    # test()
     options = get_arguments()
     rename_package_name(options.find, options.rename)
     rename_package_dir_name(options.find, options.rename)

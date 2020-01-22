@@ -1,5 +1,5 @@
 from flask import jsonify, abort, make_response, request, url_for
-from flask_praetorian import auth_required
+from flask_praetorian import auth_required, current_user
 
 from app_template.extensions import db, guard
 from app_template.models import Tasks, TasksSchema, User
@@ -14,6 +14,8 @@ def make_public_task(task):
         if field == 'id':
             url_task['uri'] = url_for(
                 'api.get_task', task_id=task['id'], _external=True)
+        elif field == 'user':
+            continue
         else:
             url_task[field] = task[field]
     return url_task
@@ -21,9 +23,12 @@ def make_public_task(task):
 
 # * curl -i http://localhost:5000/api/v.1.0/todo/tasks
 @bp.route('/v.1.0/todo/tasks', methods=['GET'])
+@auth_required
 def get_tasks():
+    user = current_user()
     response = []
-    tasks = Tasks.query.all()
+    # tasks = Tasks.query.all()
+    tasks = Tasks.query.filter_by(user_id=user.id).all()
     if tasks:
         # class serialization in JSON
         tasks = TasksSchema().dump(tasks, many=True)
@@ -37,8 +42,11 @@ def get_tasks():
 
 # * curl -i http://localhost:5000/api/v.1.0/todo/tasks/1 or 2,3....
 @bp.route('/v.1.0/todo/tasks/<int:task_id>', methods=['GET'])
+@auth_required
 def get_task(task_id):
-    task = Tasks.query.get(task_id)
+    user = current_user()
+    # task = Tasks.query.get(task_id)
+    task = Tasks.query.filter_by(user_id=user.id, id=task_id).first()
     if task:
         # class serialization in JSON
         task = TasksSchema().dump(task)
@@ -144,7 +152,12 @@ def login():
 @bp.route('/protected')
 @auth_required
 def protected():
-    return jsonify({'result': 'You are in a special area!'})
+    return jsonify(
+        {
+            'result': 'You are in a special area!',
+            'your_id': current_user().id,
+            'your_name': current_user().username
+        })
 
 
 # * curl -i -H "Content-Type: application/json" -X POST

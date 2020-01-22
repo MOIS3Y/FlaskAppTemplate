@@ -7,6 +7,7 @@ class Tasks(db.Model):
     """ Test database model. Create your models."""
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     title = db.Column(db.String(50))
     description = db.Column(db.String(150))
     done = db.Column(db.Boolean, default=False, nullable=False)
@@ -22,6 +23,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50))
     password_hash = db.Column(db.String(128))
+    tasks = db.relationship('Tasks', backref='user', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

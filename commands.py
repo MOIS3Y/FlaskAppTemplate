@@ -34,14 +34,17 @@ def create_users():
 @with_appcontext
 def create_tasks():
     first = Tasks(
+        user_id=1,
         title='create main Blueprint',
         description='add frontend',
         done=False)
     second = Tasks(
+        user_id=1,
         title='create cors Blueprint',
         description='add local page',
         done=False)
     third = Tasks(
+        user_id=2,
         title='create api Blueprint',
         description='add db fields',
         done=False)
