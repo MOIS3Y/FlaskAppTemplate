@@ -59,28 +59,36 @@ def get_task(task_id):
 # * curl -i -H "Content-Type: application/json" -X POST
 # * -d '{"title":"Read a book"}' http://localhost:5000/api/v.1.0/todo/tasks
 @bp.route('/v.1.0/todo/tasks', methods=['POST'])
+@auth_required
 def create_task():
+    user = current_user()
     if not request.json or 'title' not in request.json:
         abort(400)
     new_task = Tasks(
         title=request.json['title'],
-        description=request.json.get('description', ""))
+        description=request.json.get('description', ""),
+        user_id=user.id)
 
     db.session.add(new_task)
     db.session.commit()
 
-    last_task = Tasks.query.order_by(Tasks.id.desc()).first()
+    # last_task = Tasks.query.order_by(Tasks.id.desc()).first()
+    last_task = Tasks.query.filter_by(user_id=user.id).order_by(
+        Tasks.id.desc()).first()
+
     if last_task:
         # class serialization in JSON
         task = TasksSchema().dump(last_task)
         response = make_public_task(task)
-    return jsonify({'new_task': response}), 201
+        return jsonify({'new_task': response}), 201
 
 
 # * curl -i -H "Content-Type: application/json" -X PUT
 # * -d '{"done":true}' http://localhost:5000/api/v.1.0/todo/tasks/2
 @bp.route('/v.1.0/todo/tasks/<int:task_id>', methods=['PUT'])
+@auth_required
 def update_task(task_id):
+    user = current_user()
     if not request.json:
         abort(400)
     if 'title' in request.json and type(request.json['title']) != str:
@@ -90,7 +98,8 @@ def update_task(task_id):
         abort(400)
     if 'done' in request.json and type(request.json['done']) is not bool:
         abort(400)
-    task = Tasks.query.get(task_id)
+    # task = Tasks.query.get(task_id)
+    task = Tasks.query.filter_by(user_id=user.id, id=task_id).first()
     if task:
         task.title = request.json.get('title', task.title)
         task.description = request.json.get('description', task.description)
@@ -108,8 +117,11 @@ def update_task(task_id):
 # * curl -i -H "Content-Type: application/json" -X DELETE
 # * http://localhost:5000/api/v.1.0/todo/tasks/2
 @bp.route('/v.1.0/todo/tasks/<int:task_id>', methods=['DELETE'])
+@auth_required
 def delete_task(task_id):
-    task = Tasks.query.get(task_id)
+    user = current_user()
+    # task = Tasks.query.get(task_id)
+    task = Tasks.query.filter_by(user_id=user.id, id=task_id).first()
     if task:
         db.session.delete(task)
         db.session.commit()
@@ -169,6 +181,6 @@ def refresh():
 
 
 # * Test route
-@bp.route('/open')
-def open():
-    return jsonify({'result': 'Hello, friend'})
+@bp.route('/v.1.0/ping')
+def ping():
+    return jsonify({'response': 'Hello, friend'})
