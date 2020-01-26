@@ -54,10 +54,12 @@ class User(UserMixin, db.Model):
 
 
 class Links(db.Model):
-    """ Test database model. Create your models.
-        It just keeps a link to the documentation.
-        And created to demonstrate how you can easily put data
-        from a db into a base.html """
+    """
+    Test database model. Create your models.
+    It just keeps a link to the documentation.
+    And created to demonstrate how you can easily put data
+    from a db into a base.html
+    """
 
     id = db.Column(db.Integer, primary_key=True)
     name_url = db.Column(db.String(50))

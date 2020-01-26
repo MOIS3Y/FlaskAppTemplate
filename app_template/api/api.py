@@ -28,10 +28,39 @@ def make_public_task(task):
     return url_task
 
 
+# ! API Routes
+
+
 @bp.route('/v.1.0/ping')
 def ping():
     """ Test route """
     return jsonify({'response': 'Hello, friend'})
+
+
+@bp.route('/v.1.0/protected')
+@auth_required
+def protected():
+    """
+    Test route to verify the health of the application’s protection.
+    Returns current user data. To access, you need to go through verification
+    and get a token. With each request it is necessary to transfer a token in
+    the request header.
+
+    A simple request example:
+
+    curl
+    -i -X GET
+    -H "Content-Type: application/json"
+    -H "Authorization: Bearer <your token>"
+    http://localhost:5000/api/v.1.0/protected
+    """
+
+    return jsonify(
+        {
+            'result': 'You are in a special area!',
+            'your_id': current_user().id,
+            'your_name': current_user().username
+        })
 
 
 @bp.route('/v.1.0/todo/tasks', methods=['GET'])
@@ -224,10 +253,26 @@ def delete_task(task_id):
 
 # ! GUARD API
 
-# * curl -i -H "Content-Type: application/json" -X POST
-# * -d '{"username":"One", "password":"one"}' http://localhost:5000/api/login
-@bp.route('/login', methods=['POST'])
+
+@bp.route('/v.1.0/login', methods=['POST'])
 def login():
+    """
+    Creates a temporary token for a registered user.
+    To create a token, you need to send a json request
+    containing the user name and password. To access all protected routes,
+    (@auth_required) you need to add the received token in the header.
+    Token lifetime is configured in the config.py
+    (JWT_ACCESS_LIFESPAN = {'minutes': 20})
+
+    A simple request example:
+
+    curl
+    -i -X POST
+    -H "Content-Type: application/json"
+    -d '{"username":"One", "password":"one"}'
+    http://localhost:5000/api/v.1.0/login
+    """
+
     if not request.json:
         abort(400)
     if 'username' not in request.json or 'password' not in request.json:
@@ -241,25 +286,24 @@ def login():
     return jsonify({'access_token': token})
 
 
-# * curl -i -H "Content-Type: application/json" -X POST
-# * -d '{"token":"<your token>"}' http://localhost:5000/api/refresh
-@bp.route('/refresh', methods=['POST'])
+@bp.route('/v.1.0/refresh', methods=['POST'])
 def refresh():
+    """
+    Updates the token if its lifetime has expired.
+    Updates the token if its lifetime has expired.
+    To get a new token, you need to send the old token in the POST request
+
+    A simple request example:
+
+    curl
+    -i -X POST
+    -H "Content-Type: application/json"
+    -d '{"token":"<your token>"}'
+    http://localhost:5000/api/v.1.0/refresh
+    """
+
     token = guard.refresh_jwt_token(request.json['token'])
     return jsonify({'update_token': token})
-
-
-# * curl -i -X GET -H "Authorization: Bearer <your token>"
-# * http://localhost:5000/api/protected
-@bp.route('/protected')
-@auth_required
-def protected():
-    return jsonify(
-        {
-            'result': 'You are in a special area!',
-            'your_id': current_user().id,
-            'your_name': current_user().username
-        })
 
 
 # ! Customization of standard error output
