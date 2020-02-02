@@ -1,43 +1,74 @@
 from flask import jsonify, abort, make_response, request, url_for
-from flask_praetorian import auth_required, current_user
+from flask_praetorian import auth_required, current_user, roles_required
 
 from app_template.extensions import db, guard
 from app_template.models import Tasks, TasksSchema, User
 from ..api import bp
 
 
-def make_public_task(task):
+def make_public_task(tasks):
     """
     This is a helper function.
-    It changes the task id to the url task path.
-    Deletes the user id field.
-    This hides the IPA internal device from the user and makes the information
-    output more beautiful.
+    Prepares a class 'Tasks' for serialization in JSON
+    Using a nested function 'pretty_task()'
+    hides the internal structure API from the user
+    and makes the output of information more beautiful.
     """
+    def pretty_task(task):
+        """
+        This is a nested functions.
+        It changes the task id to the url task path.
+        Deletes the user id field.
+        """
 
-    url_task = {}
-    for field in task:
-        if field == 'id':
-            url_task['uri'] = url_for(
-                'api.get_task', task_id=task['id'], _external=True)
-        elif field == 'user':
-            continue
+        pretty_task = {}
+        for field in task:
+            if field == 'id':
+                # ? Replace id task to uri
+                pretty_task['uri'] = url_for(
+                    'api.get_task', task_id=task['id'], _external=True)
+            # ? Delete user id
+            elif field == 'user':
+                continue
+            else:
+                pretty_task[field] = task[field]
+        return pretty_task
+
+    if tasks:
+        if type(tasks) == list:
+            public_tasks = []
+            # ? class serialization in JSON
+            tasks = TasksSchema().dump(tasks, many=True)
+            for task in tasks:
+                public_tasks.append(pretty_task(task))
+            return public_tasks
         else:
-            url_task[field] = task[field]
+            # ? class serialization in JSON
+            task = TasksSchema().dump(tasks)
+            public_task = pretty_task(task)
+            return public_task
 
-    return url_task
+
+def make_response_user_task(tasks):
+    response = []
+    if tasks:
+        # ? class serialization in JSON
+        tasks = TasksSchema().dump(tasks, many=True)
+        for task in tasks:
+            response.append(task)
+        return response
 
 
 # ! API Routes
 
 
-@bp.route('/v.1.0/ping')
+@bp.route('/v.1.0/ping', methods=['GET'])
 def ping():
     """ Test route """
     return jsonify({'response': 'Hello, friend'})
 
 
-@bp.route('/v.1.0/protected')
+@bp.route('/v.1.0/protected', methods=['GET'])
 @auth_required
 def protected():
     """
@@ -75,24 +106,20 @@ def get_tasks():
 
     A simple request example:
 
-    curl -i -X GET
+    curl
+    -i -X GET
     -H "Content-Type: application/json"
     -H "Authorization: Bearer <your token>"
     http://localhost:5000/api/v.1.0/todo/tasks
 
     """
     user = current_user()
-    response = []
     tasks = Tasks.query.filter_by(user_id=user.id).all()
-    if tasks:
-        # ? class serialization in JSON
-        tasks = TasksSchema().dump(tasks, many=True)
-        for task in tasks:
-            response.append(make_public_task(task))
+    response = make_public_task(tasks)
+    if response:
+        return jsonify({'tasks': response})
     else:
-        response = 'no tasks'
-
-    return jsonify({'tasks': response})
+        return jsonify({'tasks': 'no tasks'})
 
 
 @bp.route('/v.1.0/todo/tasks/<int:task_id>', methods=['GET'])
@@ -116,10 +143,8 @@ def get_task(task_id):
     """
     user = current_user()
     task = Tasks.query.filter_by(user_id=user.id, id=task_id).first()
-    if task:
-        # ? class serialization in JSON
-        task = TasksSchema().dump(task)
-        response = make_public_task(task)
+    response = make_public_task(task)
+    if response:
         return jsonify({'task': response})
 
     abort(404)
@@ -161,10 +186,8 @@ def create_task():
     last_task = Tasks.query.filter_by(user_id=user.id).order_by(
         Tasks.id.desc()).first()
     # *Show new task
-    if last_task:
-        # ? class serialization in JSON
-        task = TasksSchema().dump(last_task)
-        response = make_public_task(task)
+    response = make_public_task(last_task)
+    if response:
         return jsonify({'new_task': response}), 201
 
 
@@ -192,7 +215,7 @@ def update_task(task_id):
     """
 
     user = current_user()
-    # ? Request verification
+    # * Request verification
     if not request.json:
         abort(400)
     if 'title' in request.json and type(request.json['title']) != str:
@@ -212,8 +235,6 @@ def update_task(task_id):
 
         db.session.add(task)
         db.session.commit()
-        # ? class serialization in JSON
-        task = TasksSchema().dump(task)
         response = make_public_task(task)
         return jsonify({'task_update': response})
 
@@ -248,6 +269,22 @@ def delete_task(task_id):
         response = {'task_delete': 'Success'}
         return jsonify(response)
 
+    abort(404)
+
+
+# ! API Admin routes
+
+@bp.route('/v.1.0/admin/todo/tasks/<username>', methods=['GET'])
+@roles_required('admin')
+def get_user_tasks(username):
+    user = User.query.filter_by(username=username).first()
+    if user:
+        tasks = Tasks.query.filter_by(user_id=user.id).all()
+        response = make_public_task(tasks)
+        if response:
+            return jsonify({'tasks': response})
+        else:
+            return jsonify({'tasks': 'no tasks'})
     abort(404)
 
 

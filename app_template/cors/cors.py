@@ -4,7 +4,7 @@ from flask_cors import cross_origin
 from app_template.cors import bp
 
 
-# *http://localhost:5000/cors
+# * http://localhost:5000/cors
 @bp.route('/', methods=['GET'])
 def index():
     BLUEPRINT_ROOT = os.path.realpath(os.path.dirname(__file__))

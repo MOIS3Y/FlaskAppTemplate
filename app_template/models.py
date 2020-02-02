@@ -8,6 +8,7 @@ class Tasks(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship('User', backref='tasks')
     title = db.Column(db.String(50))
     description = db.Column(db.String(150))
     done = db.Column(db.Boolean, default=False, nullable=False)
@@ -21,9 +22,10 @@ class User(UserMixin, db.Model):
     """ Test database model. Create your models."""
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50))
-    password_hash = db.Column(db.String(128))
-    tasks = db.relationship('Tasks', backref='user', lazy=True)
+    username = db.Column(db.String(50), unique=True)
+    password_hash = db.Column(db.String(512))
+    roles = db.Column(db.Text)  # ? admin, operator...see method "rolenames"
+    # tasks = db.relationship('Tasks', backref='user', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -32,6 +34,19 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     # * Flask Praetorian methods
+    @property
+    def rolenames(self):
+        """
+        Allows you to protect the route using the decorator:
+        @flask_praetorian.roles_required('admin ...')
+        checks user roles. If the user has a role passed
+        as an argument to the decorator, he will gain access to the endpoint.
+        """
+        try:
+            return self.roles.split(',')
+        except Exception:
+            return []
+
     @classmethod
     def lookup(cls, username):
         return cls.query.filter_by(username=username).one_or_none()
@@ -39,10 +54,6 @@ class User(UserMixin, db.Model):
     @classmethod
     def identify(cls, id):
         return cls.query.filter_by(id=id).one_or_none()
-
-    @property
-    def rolenames(self):
-        return []
 
     @property
     def identity(self):

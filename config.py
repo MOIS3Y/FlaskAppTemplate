@@ -9,9 +9,10 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'app.db')  # ? sqlite example
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    JWT_ACCESS_LIFESPAN = {'minutes': 20}  # ? GUARD token lifespan
+    JWT_ACCESS_LIFESPAN = {'minutes': 50}  # ? GUARD token lifespan
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
     SEND_FILE_MAX_AGE_DEFAULT = 0  # ? disable static file cache JS CSS
+    JSON_SORT_KEYS = False
