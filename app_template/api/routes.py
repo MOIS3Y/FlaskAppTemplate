@@ -1,4 +1,10 @@
-from flask import jsonify, abort, make_response, request, url_for
+from flask import (
+    jsonify,
+    abort,
+    make_response,
+    request,
+    url_for,
+    render_template)
 from flask_praetorian import auth_required, current_user, roles_required
 
 from app_template.extensions import db, guard
@@ -47,16 +53,6 @@ def make_public_task(tasks):
             task = TasksSchema().dump(tasks)
             public_task = pretty_task(task)
             return public_task
-
-
-def make_response_user_task(tasks):
-    response = []
-    if tasks:
-        # ? class serialization in JSON
-        tasks = TasksSchema().dump(tasks, many=True)
-        for task in tasks:
-            response.append(task)
-        return response
 
 
 # ! API Routes
@@ -274,6 +270,7 @@ def delete_task(task_id):
 
 # ! API Admin routes
 
+
 @bp.route('/v.1.0/admin/todo/tasks/<username>', methods=['GET'])
 @roles_required('admin')
 def get_user_tasks(username):
@@ -343,7 +340,16 @@ def refresh():
     return jsonify({'update_token': token})
 
 
+# ! Web routes
+
+
+@bp.route('/', methods=['GET'])
+def index():
+    return render_template('api/index.html', title='API Blueprint')
+
+
 # ! Customization of standard error output
+
 
 @bp.errorhandler(404)
 def not_found(error):

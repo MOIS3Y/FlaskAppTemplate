@@ -14,9 +14,11 @@ def index():
 
 
 @bp.route('/pong', methods=['GET'])
-# ! This is not a safe method. Read more in documentation.
-# ! Use the filter of those who have access to CORS requests.
-# ? @cross_origin(origins=[r"http://192.168.1.99/*", ...)
 @cross_origin()
 def ping_pong():
+    """
+    ! This is not a safe method. Read more in documentation.
+    ! Use the filter of those who have access to CORS requests.
+    ? @cross_origin(origins=[r"http://192.168.1.99/*", ...)
+    """
     return jsonify('Pong!')

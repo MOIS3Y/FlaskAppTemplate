@@ -33,7 +33,7 @@
       <hr class="my-4">
       <p>Test the CORS request, click the button and get the result of the ping_pong() function</p>
 
-      <div id="responce" class="lead">
+      <div id="response" class="lead">
         <button class="btn btn-secondary btn-md" type="button" @click="updateMsg">Ping</button>
         <button class="btn" v-bind:class="classObject" type="button">{{ msg }}</button>
       </div>
@@ -44,7 +44,7 @@
   <!-- Vue JS script -->
   <script>
     let app = new Vue({
-      el: '#responce',
+      el: '#response',
       data: {
         msg: 'test',
         classObject: {
